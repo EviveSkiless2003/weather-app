@@ -1,5 +1,8 @@
+let isCelsius = true;
+
 document.getElementById('search-btn').addEventListener('click', getWeather);
 document.getElementById('location-btn').addEventListener('click', getLocationWeather);
+document.getElementById('toggle-unit-btn').addEventListener('click', toggleTemperatureUnit);
 
 function getWeather() {
     const city = document.getElementById('city-input').value;
@@ -15,9 +18,7 @@ function getWeather() {
             return response.json();
         })
         .then(data => {
-            document.getElementById('city-name').innerText = `City: ${data.name}`;
-            document.getElementById('temperature').innerText = `Temperature: ${data.main.temp}°C`;
-            document.getElementById('description').innerText = `Description: ${data.weather[0].description}`;
+            displayWeather(data);
         })
         .catch(error => {
             console.error('Error:', error);
@@ -40,6 +41,18 @@ function getWeather() {
         });
 }
 
+function displayWeather(data) {
+    let temp = data.main.temp;
+    let tempText = `Temperature: ${temp}°C`;
+    if (!isCelsius) {
+        temp = (temp * 9/5) + 32;
+        tempText = `Temperature: ${temp.toFixed(1)}°F`;
+    }
+    document.getElementById('city-name').innerText = `City: ${data.name}`;
+    document.getElementById('temperature').innerText = tempText;
+    document.getElementById('description').innerText = `Description: ${data.weather[0].description}`;
+}
+
 function displayForecast(data) {
     const forecastList = document.getElementById('forecast-list');
     forecastList.innerHTML = ''; // Clear previous forecast data
@@ -51,13 +64,18 @@ function displayForecast(data) {
     data.list.forEach(item => {
         const itemDate = new Date(item.dt_txt);
         if (itemDate.getDate() === today.getDate() || itemDate.getDate() === tomorrow.getDate()) {
+            let temp = item.main.temp;
+            let tempText = `${temp}°C`;
+            if (!isCelsius) {
+                temp = (temp * 9/5) + 32;
+                tempText = `${temp.toFixed(1)}°F`;
+            }
             const date = itemDate.toLocaleDateString();
             const time = itemDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            const temp = item.main.temp;
             const description = item.weather[0].description;
 
             const forecastItem = document.createElement('li');
-            forecastItem.innerHTML = `<strong>${date} ${time}</strong><br>Temp: ${temp}°C<br>Description: ${description}`;
+            forecastItem.innerHTML = `<strong>${date} ${time}</strong><br>Temp: ${tempText}<br>Description: ${description}`;
             forecastList.appendChild(forecastItem);
         }
     });
@@ -80,9 +98,7 @@ function getLocationWeather() {
                     return response.json();
                 })
                 .then(data => {
-                    document.getElementById('city-name').innerText = `City: ${data.name}`;
-                    document.getElementById('temperature').innerText = `Temperature: ${data.main.temp}°C`;
-                    document.getElementById('description').innerText = `Description: ${data.weather[0].description}`;
+                    displayWeather(data);
                 })
                 .catch(error => {
                     console.error('Error:', error);
@@ -109,5 +125,15 @@ function getLocationWeather() {
         });
     } else {
         alert('Geolocation is not supported by this browser.');
+    }
+}
+
+function toggleTemperatureUnit() {
+    isCelsius = !isCelsius;
+    const toggleBtn = document.getElementById('toggle-unit-btn');
+    toggleBtn.innerText = isCelsius ? 'Switch to Fahrenheit' : 'Switch to Celsius';
+    const city = document.getElementById('city-input').value;
+    if (city) {
+        getWeather();
     }
 }
